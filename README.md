@@ -22,6 +22,46 @@ With [Upptime](https://upptime.js.org), you can get your own unlimited and free 
 
 [**Visit our status website →**](https://OlympusLedgerOrg.github.io/olympus-status)
 
+## Maintenance notes
+
+This section is outside Upptime's auto-generated blocks and won't be
+overwritten by `Setup CI`.
+
+**`GH_PAT` repo secret.** The default `GITHUB_TOKEN` (even with the repo's
+workflow permissions set to read/write) cannot create or update files under
+`.github/workflows/` — that's a hard GitHub restriction, not a permissions
+toggle. `Setup CI` (`update-template`) needs to do exactly that whenever it
+pulls in an upstream Upptime release, so without a real PAT it fails with:
+
+```
+refusing to allow a GitHub App to create or update workflow
+`.github/workflows/graphs.yml` without `workflows` permission
+```
+
+This does **not** affect the actual monitoring — `Uptime CI`, `Static Site
+CI`, `Response Time CI`, `Graphs CI`, and `Summary CI` only touch
+`api/`, `graphs/`, `history/`, the `gh-pages` branch, and this README, none
+of which need the `workflows` scope. Only the self-update step is blocked.
+
+To fix it: create a fine-grained PAT scoped to this repo only, with
+**Contents** (read/write) and **Workflows** (read/write) permissions (or a
+classic token with `repo` + `workflow` scopes), then:
+
+```bash
+gh secret set GH_PAT --repo OlympusLedgerOrg/olympus-status
+```
+
+`Setup CI` will use it automatically (`secrets.GH_PAT || github.token` in
+every workflow) the next time it runs — trigger it manually via
+`gh workflow run "Setup CI" --repo OlympusLedgerOrg/olympus-status` after
+adding the secret, or wait for the next `.upptimerc.yml` change.
+
+**What's monitored.** Only the GitHub Pages landing page
+(`olympusledgerorg.github.io/Olympus`) — Olympus's desktop app binds its
+Axum server to `127.0.0.1` only by design, so there's no other public HTTP
+endpoint to check today. Add a new entry under `sites:` in `.upptimerc.yml`
+if a second public deployment goes live.
+
 ## 📄 License
 
 - Powered by: [Upptime](https://github.com/upptime/upptime)
